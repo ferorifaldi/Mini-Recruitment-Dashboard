@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TalentFlow - Mini Recruitment Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-slate-50/50 text-slate-900 font-sans antialiased" x-data="dashboardApp()">
+
+    <div x-show="!isLoggedIn" class="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-slate-50">
+        <div class="sm:mx-auto sm:w-full sm:max-w-md text-center">
+            <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight">
+                Talent<span class="text-indigo-600">Flow</span>
+            </h2>
+            <p class="mt-2 text-sm text-slate-600">Mini Recruitment Dashboard SaaS Style</p>
+        </div>
+
+        <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+            <div class="bg-white py-8 px-4 shadow-sm border border-slate-200 rounded-xl sm:px-10">
+                <form @submit.prevent="handleLogin" class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700">Email Address</label>
+                        <input type="email" x-model="loginEmail" required class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm shadow-sm placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" placeholder="admin@recruiter.com">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700">Password</label>
+                        <input type="password" x-model="loginPassword" required class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm shadow-sm placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" placeholder="••••••••">
+                    </div>
+                    <div x-show="loginError" class="text-xs text-red-600 font-medium" x-text="loginError"></div>
+                    <div>
+                        <button type="submit" class="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none transition-colors">
+                            Sign In
+                        </button>
+                    </div>
+                </form>
+                <div class="mt-4 text-center text-xs text-slate-400">
+                    Gunakan: admin@recruiter.com / password123
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div x-show="isLoggedIn" x-cloak>
+        <nav class="bg-white border-b border-slate-200 sticky top-0 z-10 px-6 py-4 flex justify-between items-center">
+            <h1 class="text-xl font-bold tracking-tight text-slate-900">Talent<span class="text-indigo-600">Flow</span><span class="text-xs font-normal text-slate-400 ml-2">Sheet A:L</span></h1>
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center text-sm font-semibold">HR</div>
+                    <span class="text-sm font-medium text-slate-700 hidden sm:inline">Recruiter Admin</span>
+                </div>
+                <button @click="isLoggedIn = false" class="text-xs font-medium text-slate-500 hover:text-red-600 transition-colors">Logout</button>
+            </div>
+        </nav>
+
+        <main class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
+            
+            <div class="grid grid-cols-1 gap-5 sm:grid-cols-3">
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-4">
+                    <div class="p-3 bg-indigo-50 rounded-lg text-indigo-600"><i data-lucide="briefcase"></i></div>
+                    <div>
+                        <p class="text-sm font-medium text-slate-500">Total Jobs</p>
+                        <p class="text-2xl font-bold text-slate-900" x-text="countTotalJobs()"></p>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-4">
+                    <div class="p-3 bg-emerald-50 rounded-lg text-emerald-600"><i data-lucide="users"></i></div>
+                    <div>
+                        <p class="text-sm font-medium text-slate-500">Total Candidates</p>
+                        <p class="text-2xl font-bold text-slate-900" x-text="countTotalCandidates()"></p>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-4">
+                    <div class="p-3 bg-amber-50 rounded-lg text-amber-600"><i data-lucide="file-text"></i></div>
+                    <div>
+                        <p class="text-sm font-medium text-slate-500">Total Applications</p>
+                        <p class="text-2xl font-bold text-slate-900" x-text="countTotalApplications()"></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="p-6 border-b border-slate-200 sm:flex sm:items-center sm:justify-between">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-900">Job Management</h2>
+                        <p class="text-sm text-slate-500">List Pekerjaan aktif berdasar database Sheet Range A:L</p>
+                    </div>
+                    <button @click="showAddJobModal = true" class="mt-4 sm:mt-0 inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition-colors gap-2">
+                        <i data-lucide="plus" class="w-4 h-4"></i> Add New Job
+                    </button>
+                </div>
+
+                <div class="p-4 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row gap-3">
+                    <div class="relative flex-1">
+                        <input type="text" x-model="searchQuery" placeholder="Search jobs by title..." class="w-full pl-4 pr-4 py-2 bg-white border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div class="flex items-center gap-2 bg-white px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700">
+                        <select x-model="statusFilter" class="focus:outline-none bg-transparent">
+                            <option value="All">All Status</option>
+                            <option value="Active">Active</option>
+                            <option value="Closed">Closed</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-slate-200">
+                        <thead class="bg-slate-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Job Title (C)</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Department (D)</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Location (F)</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Type (G)</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status (E)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-slate-200">
+                            <template x-for="job in filteredJobs()" :key="job.id">
+                                <tr class="hover:bg-slate-50/80 transition-colors">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-slate-900" x-text="job.title_name"></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600" x-text="job.department_email"></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500" x-text="job.location"></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                        <span class="px-2.5 py-1 bg-slate-100 text-slate-700 rounded-md text-xs font-medium" x-text="job.type_work"></span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                        <span :class="job.status === 'Active' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'" class="px-2.5 py-1 rounded-full text-xs font-medium" x-text="job.status"></span>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div>
+                <h2 class="text-lg font-bold text-slate-900 mb-1">Candidate Pipeline</h2>
+                <p class="text-sm text-slate-500 mb-4">Pipeline progress rekrutmen kandidat pelamar kerja.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-slate-100/70 p-4 rounded-xl border border-slate-200/60">
+                        <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-200">
+                            <span class="font-semibold text-sm text-slate-700 flex items-center gap-1">🕒 Applied</span>
+                            <span class="bg-white px-2 py-0.5 rounded text-xs font-bold text-slate-500" x-text="getPipelineCandidates('Applied').length"></span>
+                        </div>
+                        <div class="space-y-3">
+                            <template x-for="c in getPipelineCandidates('Applied')" :key="c.id">
+                                <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm space-y-2">
+                                    <h4 class="font-semibold text-sm text-slate-900" x-text="c.title_name"></h4>
+                                    <p class="text-xs text-slate-500" x-text="c.department_email"></p>
+                                    <div class="text-[11px] bg-slate-50 p-1.5 rounded text-slate-600 border-l-2 border-indigo-500" x-text="c.notes"></div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-100/70 p-4 rounded-xl border border-slate-200/60">
+                        <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-200">
+                            <span class="font-semibold text-sm text-slate-700 flex items-center gap-1">🗣️ Interview</span>
+                            <span class="bg-white px-2 py-0.5 rounded text-xs font-bold text-slate-500" x-text="getPipelineCandidates('Interview').length"></span>
+                        </div>
+                        <div class="space-y-3">
+                            <template x-for="c in getPipelineCandidates('Interview')" :key="c.id">
+                                <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm space-y-2">
+                                    <h4 class="font-semibold text-sm text-slate-900" x-text="c.title_name"></h4>
+                                    <p class="text-xs text-slate-500" x-text="c.department_email"></p>
+                                    <div class="text-[11px] bg-slate-50 p-1.5 rounded text-slate-600 border-l-2 border-indigo-500" x-text="c.notes"></div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-100/70 p-4 rounded-xl border border-slate-200/60">
+                        <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-200">
+                            <span class="font-semibold text-sm text-slate-700 flex items-center gap-1">🎉 Hired</span>
+                            <span class="bg-white px-2 py-0.5 rounded text-xs font-bold text-slate-500" x-text="getPipelineCandidates('Hired').length"></span>
+                        </div>
+                        <div class="space-y-3">
+                            <template x-for="c in getPipelineCandidates('Hired')" :key="c.id">
+                                <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm space-y-2">
+                                    <h4 class="font-semibold text-sm text-slate-900" x-text="c.title_name"></h4>
+                                    <p class="text-xs text-slate-500" x-text="c.department_email"></p>
+                                    <div class="text-[11px] bg-slate-50 p-1.5 rounded text-slate-600 border-l-2 border-emerald-500" x-text="c.notes"></div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <div x-show="showAddJobModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50" x-cloak>
+            <div class="bg-white rounded-xl shadow-xl border border-slate-200 max-w-md w-full p-6 space-y-4">
+                <h3 class="text-lg font-bold text-slate-900">Create New Job Position</h3>
+                <form @submit.prevent="addNewJob" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase">Job Title</label>
+                        <input required type="text" x-model="newJob.title" class="mt-1 w-full p-2 border border-slate-300 rounded-lg text-sm focus:ring-1 focus:ring-indigo-500" placeholder="e.g. Product Manager">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase">Department</label>
+                        <input required type="text" x-model="newJob.dept" class="mt-1 w-full p-2 border border-slate-300 rounded-lg text-sm" placeholder="e.g. Technology">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase">Location</label>
+                            <input required type="text" x-model="newJob.location" class="mt-1 w-full p-2 border border-slate-300 rounded-lg text-sm" placeholder="e.g. Jakarta (Hybrid)">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase">Work Type</label>
+                            <input required type="text" x-model="newJob.typeWork" class="mt-1 w-full p-2 border border-slate-300 rounded-lg text-sm" placeholder="e.g. Full-time">
+                        </div>
+                    </div>
+                    <div class="flex justify-end gap-2 pt-2">
+                        <button type="button" @click="showAddJobModal = false" class="px-4 py-2 bg-slate-100 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-200">Cancel</button>
+                        <button type="submit" class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700">Save Position</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function dashboardApp() {
+            return {
+                isLoggedIn: false,
+                loginEmail: '',
+                loginPassword: '',
+                loginError: '',
+                searchQuery: '',
+                statusFilter: 'All',
+                showAddJobModal: false,
+                newJob: { title: '', dept: '', location: '', typeWork: '' },
+                
+                // Representasi Mapping Sheet Range A:L
+                sheetData: [
+                    { id: 'J-01', type: 'JOB', title_name: 'Senior Frontend Engineer', department_email: 'Engineering', status: 'Active', location: 'Remote', type_work: 'Full-time' },
+                    { id: 'J-02', type: 'JOB', title_name: 'Lead Product Designer', department_email: 'Product', status: 'Active', location: 'Jakarta', type_work: 'Full-time' },
+                    { id: 'J-03', type: 'JOB', title_name: 'DevOps Specialist', department_email: 'Engineering', status: 'Closed', location: 'Bandung', type_work: 'Contract' },
+                    { id: 'C-01', type: 'CANDIDATE', title_name: 'Farhan Ramadhan', department_email: 'farhan@email.com', status: 'Applied', notes: 'Kandidat potensial, eks-Unicorn' },
+                    { id: 'C-02', type: 'CANDIDATE', title_name: 'Siti Alyah', department_email: 'siti@email.com', status: 'Interview', notes: 'Jadwal interview Tech tanggal 5 Juni' },
+                    { id: 'C-03', type: 'CANDIDATE', title_name: 'Rian Wijaya', department_email: 'rian@email.com', status: 'Hired', notes: 'Offering diterima. Masuk Juli.' }
+                ],
+
+                init() {
+                    lucide.createIcons();
+                },
+                handleLogin() {
+                    if (this.loginEmail === 'admin@recruiter.com' && this.loginPassword === 'password123') {
+                        this.isLoggedIn = true;
+                        this.loginError = '';
+                    } else {
+                        this.loginError = 'Email atau password salah!';
+                    }
+                },
+                countTotalJobs() {
+                    return this.sheetData.filter(i => i.type === 'JOB').length;
+                },
+                countTotalCandidates() {
+                    return this.sheetData.filter(i => i.type === 'CANDIDATE').length;
+                },
+                countTotalApplications() {
+                    return this.sheetData.filter(i => i.type === 'CANDIDATE' && i.status === 'Applied').length;
+                },
+                filteredJobs() {
+                    return this.sheetData.filter(i => {
+                        if (i.type !== 'JOB') return false;
+                        const matchSearch = i.title_name.toLowerCase().includes(this.searchQuery.toLowerCase());
+                        const matchStatus = this.statusFilter === 'All' || i.status === this.statusFilter;
+                        return matchSearch && matchStatus;
+                    });
+                },
+                getPipelineCandidates(status) {
+                    return this.sheetData.filter(i => i.type === 'CANDIDATE' && i.status === status);
+                },
+                addNewJob() {
+                    const nextId = 'J-0' + (this.countTotalJobs() + 1);
+                    this.sheetData.push({
+                        id: nextId,
+                        type: 'JOB',
+                        title_name: this.newJob.title,
+                        department_email: this.newJob.dept,
+                        status: 'Active',
+                        location: this.newJob.location,
+                        type_work: this.newJob.typeWork
+                    });
+                    this.showAddJobModal = false;
+                    this.newJob = { title: '', dept: '', location: '', typeWork: '' };
+                }
+            }
+        }
+    </script>
+</body>
+</html>
